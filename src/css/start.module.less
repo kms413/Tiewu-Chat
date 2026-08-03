@@ -1,0 +1,296 @@
+@import "./theme.module.less";
+
+.content-box {
+  width: max(calc(100% - 400px), 80%);
+  height: min(800px, 60%);
+  display: flex;
+  gap: 20px;
+}
+.title-box {
+  width: calc(50% - 5px);
+  height: calc(100% - 5px);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.title {
+  font-family: "ysbth";
+  font-weight: 100;
+  font-size: 120px;
+  @media (prefers-color-scheme: dark) {
+    color: rgb(255, 255, 255);
+  }
+  user-select: none;
+  z-index: 2;
+}
+.title-box-shadow {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1;
+}
+.title-box-shadow > div {
+  position: fixed;
+  left: 0;
+  background-color: color-mix(in srgb, @primary-color 30%, transparent);
+}
+
+.login-box {
+  width: min(calc(50% - 1px), 400px);
+  height: calc(100% - 2px);
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: flipPageIn 0.4s cubic-bezier(0.58, 0.08, 0.26, 1.1) forwards;
+  &:hover {
+    .login-box-background {
+      transform: rotate(2deg);
+    }
+    .login-box-border {
+      transform: rotate(-2deg);
+    }
+  }
+}
+.login-box-border {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid @primary-color;
+  box-shadow: 0 0 3px @primary-color;
+  transform: rotate(2deg);
+  z-index: -1;
+  transition: transform 0.3s ease-in-out;
+}
+
+.login-box-background {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-2deg);
+  @media (prefers-color-scheme: dark) {
+    background-color: #e7e7e7;
+  }
+  @media (prefers-color-scheme: light) {
+    background-color: #4e997c;
+  }
+  z-index: -1;
+  transition: transform 0.3s ease-in-out;
+}
+.login-box-title {
+  font-family: "ysbth";
+  font-weight: 100;
+  font-size: 38px;
+  @media (prefers-color-scheme: dark) {
+    color: rgb(27, 27, 27);
+  }
+  @media (prefers-color-scheme: light) {
+    color: rgb(255, 255, 255);
+  }
+  user-select: none;
+  margin-top: 50px;
+}
+.login-submit-button {
+  width: 90%;
+  height: 40px;
+  font-family: "ysbth";
+  font-weight: 100;
+  font-size: 20px;
+
+  border: none;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: @primary-color;
+    color: rgb(0, 0, 0);
+  }
+  @media (prefers-color-scheme: light) {
+    background-color: rgba(0, 0, 0, 0.445);
+    opacity: 0.8;
+    color: rgb(255, 255, 255);
+    border: 3px solid white;
+  }
+  user-select: none;
+  transition: opacity 0.3s ease-in-out;
+}
+.login-submit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: @primary-color;
+  }
+  @media (prefers-color-scheme: light) {
+    background-color: rgba(0, 0, 0, 0.445);
+  }
+}
+.login-form-box {
+  --input-width: 90%;
+  --input-height: 40px;
+  --input-text-indent: 1em;
+  width: 90%;
+  height: 60%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  gap: 30px;
+  padding: 50px;
+  position: relative;
+}
+
+@keyframes flipPageIn {
+  0% {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(-90deg);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg);
+  }
+}
+.login-tips{
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 20px;
+    color: rgba(224, 70, 70, 1);
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    translate: 0 -2em;
+}
+.login-input-box {
+  width: var(--input-width);
+  height: var(--input-height);
+  border: 2px solid @primary-color;
+  position: relative;
+  white-space: nowrap;
+}
+.login-input-box::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  height: 90%;
+  @media (prefers-color-scheme: dark) {
+    background-color: color-mix(in srgb, @primary-color, black 70%);
+    width: 90%;
+    opacity: 0.1;
+  }
+  @media (prefers-color-scheme: light) {
+    background-color: color-mix(in srgb, @primary-color, white 70%);
+    width: 100%;
+  }
+  z-index: -1;
+  transform: rotate(-1deg);
+}
+.login-input {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: transparent;
+  font-family: "ysbth";
+  font-size: 20px;
+  font-weight: 50;
+  text-indent: var(--input-text-indent);
+  @media (prefers-color-scheme: dark) {
+    color: rgb(41, 41, 41);
+  }
+  @media (prefers-color-scheme: light) {
+    color: #4e997c;
+  }
+}
+input:autofill{
+    background-color: transparent !important;
+    filter: unset
+}
+// Firefox 自动填充会给 input 涂上默认黄色，覆盖为透明保持设计一致
+.login-input:-moz-autofill {
+  background-color: transparent !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  filter: unset;
+}
+// Chrome/Safari 自动填充的淡蓝底也统一压成透明
+.login-input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
+  -webkit-text-fill-color: currentColor;
+}
+.login-input-box-password {
+  display: flex;
+  align-items: center;
+}
+.login-input.login-input-password {
+  width: 80%;
+}
+
+.login-input-password {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+.login-input-password[type="password"]:not(:placeholder-shown) {
+  letter-spacing: -2px;
+}
+
+// 隐藏输入密码时的眼睛图标（全浏览器兼容）
+.login-input-password[type="password"] {
+  // IE / 旧版 Edge
+  &::-ms-reveal {
+    display: none !important;
+  }
+
+  // Chrome / Safari / 新版 Edge
+  &::-webkit-reveal {
+    display: none !important;
+  }
+
+  // WebKit 自动填充密码按钮
+  &::-webkit-credentials-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  // 旧版 Safari 自动填充联系人按钮
+  &::-webkit-contacts-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+  }
+}
+
+.login-input-password-icon-box {
+  width: 20%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  cursor: pointer;
+}
+
+.login-input-password-icon-box svg {
+  width: 80%;
+  height: 80%;
+  margin: auto;
+}
+
+.login-input:focus {
+  outline: none;
+}
+
+.login-input::placeholder {
+  text-indent: var(--input-text-indent);
+}
+.login-details-tech-support {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgb(60, 150, 223);
+  font-family: apple-system, Microsoft YaHei, "微软雅黑", sans-serif, "ysbth";
+}

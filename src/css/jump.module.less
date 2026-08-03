@@ -1,0 +1,42 @@
+@import "./theme.module.less";
+
+@color: color-mix(in srgb, @primary-color, white 30%);
+
+.jump-end{
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    width: 0vw;
+    height: 100vh;
+    background-color: @color;
+    animation: jump-end 0.5s cubic-bezier(1,.1,.38,1.29) forwards;
+}
+@keyframes jump-end {
+    0% {
+        width: 0vw;
+    }
+    100% {
+        width: 100vw;
+    }
+}
+.jump-start{
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100vh;
+    background-color: @color;
+    animation: jump-start 0.5s cubic-bezier(.81,-0.04,.43,1.04) forwards;
+}
+@keyframes jump-start {
+    0% {
+        width: 100vw;
+        left: 0;
+    }
+    100% {
+        width: 0vw;
+        left: 100vw;
+    }
+}

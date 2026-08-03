@@ -1,0 +1,397 @@
+@import "./theme.module.less";
+
+.container{
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    z-index: 100;
+    width: 70vw;
+    height: 70vh;
+}
+.container-inner{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(36, 36, 36);
+}
+.shadow-background{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(39, 39, 39);
+    transform: rotate(1deg);
+}
+.shadow-background-3{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(255, 255, 255);
+}
+.shadow-background-2{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: @primary-color;
+    transform: rotate(-1deg);
+}
+.top-menu{
+    width: 100%;
+    height: 70px;
+    box-sizing: border-box;
+    padding: 15px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+.top-menu-close-button{
+    height: 30px;
+    width: 30px;
+    border: 1px solid rgb(240, 21, 21);
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 
+        background-color .2s ease-in-out,
+    ;
+}
+.top-menu-close-button:hover{
+    background-color: rgb(240, 21, 21);
+}
+.top-menu-close-button svg{
+    width: 60%;
+    height: 60%;
+    stroke: red;
+    transition: stroke .2s ease-in-out;
+}
+.top-menu-close-button:hover svg{
+    stroke: white;
+}
+.top-menu-info-area{
+    flex: 1;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding: 10px;
+    gap: 10px;
+}
+.top-menu-info-area>h1{
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 28px;
+    @media (prefers-color-scheme: dark){
+        color: white;
+    }
+    @media (prefers-color-scheme: light){
+        color: white;
+    }
+}
+.settings-body{
+    position: relative;
+    width: 100%;
+    height: calc(100% - 70px);
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding: 10px 30px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 24px;
+}
+.settings-body::-webkit-scrollbar{
+    width: 8px;
+}
+.settings-body::-webkit-scrollbar-thumb{
+    background-color: color-mix(in srgb, @primary-color, white 50%);
+}
+.settings-body::-webkit-scrollbar-track{
+    background-color: transparent;
+}
+.settings-section{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 12px;
+}
+.settings-section-head{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.settings-section-title{
+    margin: 0;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 22px;
+    color: rgb(255, 255, 255);
+}
+.model-grid{
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+.model-card{
+    border: 2px solid @primary-color;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    text-align: left;
+    font-family: "ysbth";
+    font-weight: 100;
+    color: @primary-color;
+    transition:
+        background-color .3s ease-in-out,
+        color .3s ease-in-out;
+    &:hover{
+        background-color: color-mix(in srgb, @primary-color, transparent 70%);
+    }
+}
+.model-card-active,
+.model-card-active:hover{
+    background-color: @primary-color;
+    color: rgb(0, 0, 0);
+}
+.model-card-head{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.model-card-name{
+    flex: 1;
+    min-width: 0;
+    font-size: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.model-card-badge{
+    flex: none;
+    padding: 1px 8px;
+    border: 1px solid currentColor;
+    font-size: 12px;
+    opacity: .85;
+}
+.model-card-meta{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 2px;
+    font-family: "Microsoft YaHei", "微软雅黑", "Arial";
+    font-size: 12px;
+    opacity: .75;
+    word-break: break-all;
+}
+.model-card-description{
+    margin: 0;
+    font-size: 13px;
+    opacity: .6;
+    word-break: break-all;
+}
+.model-card-actions{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+.model-card-action-button{
+    padding: 4px 12px;
+    border: 1px solid @primary-color;
+    background-color: transparent;
+    cursor: pointer;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 13px;
+    color: @primary-color;
+    transition:
+        background-color .2s ease-in-out,
+        color .2s ease-in-out;
+    &:hover{
+        background-color: @primary-color;
+        color: rgb(0, 0, 0);
+    }
+}
+.model-card-active .model-card-action-button{
+    border-color: rgb(0, 0, 0);
+    color: rgb(0, 0, 0);
+    &:hover{
+        background-color: rgb(0, 0, 0);
+        color: @primary-color;
+    }
+}
+.model-card-delete-button{
+    border-color: rgb(240, 21, 21);
+    color: rgb(240, 21, 21);
+    &:hover{
+        background-color: rgb(240, 21, 21);
+        color: rgb(255, 255, 255);
+    }
+}
+.settings-field{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 6px;
+}
+.settings-label{
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 16px;
+    color: rgb(255, 255, 255);
+}
+.settings-input,
+.settings-select{
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 2px solid @primary-color;
+    background-color: transparent;
+    outline: none;
+    font-family: "Microsoft YaHei", "微软雅黑", "Arial";
+    font-size: 15px;
+    color: color-mix(in srgb, @primary-color, white 60%);
+    transition: box-shadow .2s ease-in-out;
+    &:focus{
+        box-shadow: 0 0 4px @primary-color;
+    }
+    &:disabled{
+        opacity: .55;
+        cursor: not-allowed;
+    }
+}
+.settings-select{
+    cursor: pointer;
+    option{
+        background-color: rgb(30, 30, 30);
+        color: rgb(255, 255, 255);
+    }
+}
+.settings-textarea{
+    min-height: 80px;
+    padding: 12px;
+    resize: vertical;
+    font-family: "Microsoft YaHei", "微软雅黑", "Arial";
+    line-height: 1.5;
+}
+.account-deletion{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.account-deletion-warning{
+    margin: 0;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 14px;
+    color: rgb(240, 21, 21);
+}
+.account-deletion-button{
+    height: 38px;
+    border: 2px solid rgb(240, 21, 21);
+    background-color: rgba(240, 21, 21, 0.15);
+    color: rgb(240, 21, 21);
+    font-family: "ysbth";
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color .2s ease-in-out, color .2s ease-in-out;
+    &:hover:not(:disabled){
+        background-color: rgb(240, 21, 21);
+        color: rgb(255, 255, 255);
+    }
+    &:disabled{
+        opacity: .5;
+        cursor: not-allowed;
+    }
+}
+.settings-tip{
+    margin: 0;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 14px;
+    word-break: break-all;
+    color: color-mix(in srgb, @primary-color, white 40%);
+}
+.settings-empty{
+    margin: 0;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 14px;
+    opacity: .7;
+    color: rgb(255, 255, 255);
+}
+.settings-error{
+    margin: 0;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 14px;
+    color: rgb(240, 21, 21);
+}
+.model-editor{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid @primary-color;
+    background-color: color-mix(in srgb, @primary-color, transparent 88%);
+}
+.settings-editor-actions{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+}
+.settings-action-button{
+    padding: 8px 18px;
+    border: 2px solid @primary-color;
+    background-color: @primary-color;
+    cursor: pointer;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 15px;
+    color: rgb(0, 0, 0);
+    transition:
+        background-color .2s ease-in-out,
+        color .2s ease-in-out,
+        box-shadow .2s ease-in-out;
+    &:hover{
+        background-color: transparent;
+        color: @primary-color;
+        box-shadow: 0 0 6px @primary-color;
+    }
+}
+.settings-action-button-secondary{
+    padding: 8px 18px;
+    border: 2px solid @primary-color;
+    background-color: transparent;
+    cursor: pointer;
+    font-family: "ysbth";
+    font-weight: 100;
+    font-size: 15px;
+    color: @primary-color;
+    &:hover{
+        background-color: color-mix(in srgb, @primary-color, transparent 75%);
+    }
+}
