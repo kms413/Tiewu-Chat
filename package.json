@@ -1,8 +1,17 @@
 {
-  "name": "chatccb",
+  "name": "铁屋叙事Chat",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
+  "license": "AGPL-3.0-only",
+  "keywords": [
+    "铁屋叙事",
+    "朱重八",
+    "朱元璋",
+    "猫娘",
+    "AI",
+    "Chat"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
