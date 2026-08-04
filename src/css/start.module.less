@@ -54,6 +54,25 @@
     }
   }
 }
+.login-box-follower {
+  width: 100px;
+  height: 100px;
+  background-color: transparent;
+  z-index: 1;
+  position: absolute;
+  left: 0;
+  scale: 0;
+  top: 0;
+  transition:
+    background-color 0.3s ease-in-out,
+    scale 0.1s ease-out,
+    rotate 0.1s ease-out;
+}
+.login-box-follower>img{
+  opacity: .5;
+  width: 100%;
+  height: 100%;
+}
 .login-box-border {
   position: absolute;
   left: 0;
@@ -154,15 +173,45 @@
     transform: perspective(1200px) rotateY(0deg);
   }
 }
-.login-tips{
-    font-family: "ysbth";
-    font-weight: 100;
-    font-size: 20px;
-    color: rgba(224, 70, 70, 1);
-    margin: 0;
-    padding: 0;
-    position: absolute;
-    translate: 0 -2em;
+.login-tips {
+  font-family: "ysbth";
+  font-weight: 100;
+  font-size: 20px;
+  color: rgba(224, 70, 70, 1);
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  translate: 0 -2em;
+}
+.animated-input-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+.animated-caret {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 1.1em;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: left 100ms ease-out;
+  @media (prefers-color-scheme: dark) {
+    background-color: rgb(41, 41, 41);
+  }
+  @media (prefers-color-scheme: light) {
+    background-color: #4e997c;
+  }
+}
+.animated-caret-visible {
+  opacity: 1;
+  animation: caret-blink 1s step-end infinite;
+}
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 .login-input-box {
   width: var(--input-width);
@@ -207,9 +256,9 @@
     color: #4e997c;
   }
 }
-input:autofill{
-    background-color: transparent !important;
-    filter: unset
+input:autofill {
+  background-color: transparent !important;
+  filter: unset;
 }
 // Firefox 自动填充会给 input 涂上默认黄色，覆盖为透明保持设计一致
 .login-input:-moz-autofill {
@@ -292,5 +341,10 @@ input:autofill{
   font-size: 16px;
   font-weight: 400;
   color: rgb(60, 150, 223);
-  font-family: apple-system, Microsoft YaHei, "微软雅黑", sans-serif, "ysbth";
+  font-family:
+    apple-system,
+    Microsoft YaHei,
+    "微软雅黑",
+    sans-serif,
+    "ysbth";
 }

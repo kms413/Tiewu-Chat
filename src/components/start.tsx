@@ -3,6 +3,11 @@ import React, { useEffect } from "react";
 import gsap from "gsap";
 import type { CustomSubmitEvent } from "../types/start";
 
+let luxunImageURI = "";
+import("../assets/tiewu.png").then((module) => {
+  luxunImageURI = module.default;
+});
+
 function StartComponent({ children }: { children: React.ReactNode }) {
   return <div className={style["content-box"]}>{children}</div>;
 }
@@ -39,7 +44,7 @@ function TitleComponent() {
     for (let i = 0; i < rectsLength; i++) {
       setTimeout(() => {
         const child = children[i] as HTMLDivElement;
-        if(!child) return
+        if (!child) return;
         const rect = rects[i + 1];
         child.style.transform = `translate(${rect.left + rect.width * 0.5}px, ${rect.top + lineHeight * 0.5}px)`;
         child.style.height = `${rect.height - lineHeight}px`;
@@ -57,12 +62,12 @@ function TitleComponent() {
     if (!rectsRef.current) return;
     const children: HTMLCollection = shadowRef.current.children;
     for (let i = 0; i < children.length; i++) {
-    const rect = rectsRef.current[i+1]!
+      const rect = rectsRef.current[i + 1]!;
       setTimeout(() => {
         const child = children[i] as HTMLDivElement;
         gsap.to(child, {
           width: "0px",
-          x: () => Math.random() > .5 ? rect.left : rect.left + rect.width,
+          x: () => (Math.random() > 0.5 ? rect.left : rect.left + rect.width),
           duration: 0.334,
           ease: "expo.in",
           overwrite: true,
@@ -136,20 +141,93 @@ const passwordEyeHiddenIcon = (
   </svg>
 );
 
+function AnimatedLoginInput({
+  inputRef,
+  placeholder,
+  className,
+  onChange,
+  onKeyDown,
+}: {
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  placeholder?: string;
+  className?: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
+}) {
+  const [value, setValue] = React.useState("");
+  const [caretLeft, setCaretLeft] = React.useState(0);
+  const [isFocused, setIsFocused] = React.useState(false);
+
+  const updateCaret = React.useCallback(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    const pos = input.selectionStart ?? value.length;
+    const textBefore = value.slice(0, pos);
+    const computed = getComputedStyle(input);
+    const textIndent = parseFloat(computed.textIndent) || 0;
+    const paddingLeft = parseFloat(computed.paddingLeft) || 0;
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.font = `${computed.fontStyle} ${computed.fontVariant} ${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`;
+    const width = ctx.measureText(textBefore).width;
+    setCaretLeft(textIndent + paddingLeft + width);
+  }, [inputRef, value]);
+
+  React.useEffect(() => {
+    updateCaret();
+  }, [value, updateCaret]);
+
+  React.useEffect(() => {
+    if (!document.fonts) return;
+    document.fonts.ready.then(updateCaret);
+  }, [updateCaret]);
+
+  return (
+    <div className={style["animated-input-wrapper"]}>
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        className={className}
+        onChange={(e) => {
+          setValue(e.target.value);
+          onChange(e);
+          requestAnimationFrame(updateCaret);
+        }}
+        onKeyUp={updateCaret}
+        onClick={updateCaret}
+        onFocus={() => {
+          setIsFocused(true);
+          updateCaret();
+        }}
+        onBlur={() => setIsFocused(false)}
+        onKeyDown={onKeyDown}
+        style={{ caretColor: "transparent" }}
+      />
+      <span
+        className={`${style["animated-caret"]} ${isFocused ? style["animated-caret-visible"] : ""}`}
+        style={{ left: caretLeft }}
+      />
+    </div>
+  );
+}
+
 function LoginUserNameComponent({
   onChange,
   inputRef,
   onKeyDown,
 }: {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  inputRef: React.Ref<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   onKeyDown: React.KeyboardEventHandler<HTMLInputElement>;
 }) {
   return (
     <LoginInputBox>
-      <input
-        ref={inputRef}
-        type="text"
+      <AnimatedLoginInput
+        inputRef={inputRef}
         placeholder="UserName"
         className={style["login-input"]}
         onChange={onChange}
@@ -214,6 +292,7 @@ function LoginDetailsComponent() {
       <a
         href="https://github.com/kms413"
         className={style["login-details-tech-support"]}
+        draggable={false}
       >
         技术支持 | KMS413
       </a>
@@ -221,43 +300,51 @@ function LoginDetailsComponent() {
   );
 }
 
-const TipsNoUserNameOrPassword = <span className={style["login-tips"]}>请输入用户名或密码</span>
+const TipsNoUserNameOrPassword = (
+  <span className={style["login-tips"]}>请输入用户名或密码</span>
+);
 
-function LoginFormComponent({
-    onSubmit
-}: {
-    onSubmit: CustomSubmitEvent;
-}) {
+function LoginFormComponent({ onSubmit }: { onSubmit: CustomSubmitEvent }) {
   const [isTipVisible, setTipVisible] = React.useState(false);
-  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = React.useState(false);
+  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] =
+    React.useState(false);
   const userNameValue = React.useRef("");
   const passwordValue = React.useRef("");
   const isSubmitted = React.useRef(false);
   const userNameInputRef = React.useRef<HTMLInputElement>(null);
   const passwordInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleOnUserNameValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOnUserNameValueChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     userNameValue.current = e.target.value;
   };
-  const handleOnPasswordValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOnPasswordValueChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     passwordValue.current = e.target.value;
   };
   const handleOnSubmitButtonClick = () => {
-    if(isSubmitted.current){
-        return;
+    if (isSubmitted.current) {
+      return;
     }
-    if(!userNameValue.current || !passwordValue.current){
-        setTipVisible(true);
-        setTimeout(() => {
-          setTipVisible(false);
-        }, 2000);
-        return;
+    if (!userNameValue.current || !passwordValue.current) {
+      setTipVisible(true);
+      setTimeout(() => {
+        setTipVisible(false);
+      }, 2000);
+      return;
     }
     isSubmitted.current = true;
     setIsSubmitButtonDisabled(true);
-    onSubmit({userName: userNameValue.current, password: passwordValue.current});
+    onSubmit({
+      userName: userNameValue.current,
+      password: passwordValue.current,
+    });
   };
-  const handleOnUserNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleOnUserNameKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key !== "Enter") {
       return;
     }
@@ -266,7 +353,9 @@ function LoginFormComponent({
     }
     passwordInputRef.current?.focus();
   };
-  const handleOnPasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleOnPasswordKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key !== "Enter") {
       return;
     }
@@ -295,17 +384,107 @@ function LoginFormComponent({
   );
 }
 
-function LoginComponent({
-    onSubmit
-}: {
-    onSubmit: CustomSubmitEvent;
-}) {
+const LOGIN_BOX_FOLLOWER_COLORS = [
+  "#FF0055",  // 霓虹红
+  "#FF6B00",  // 霓虹橙
+  "#FFE600",  // 霓虹黄
+  "#00FF41",  // 霓虹绿
+  "#00D4FF",  // 霓虹蓝
+  "#7B00FF",  // 霓虹紫
+  "#FF00E5",  // 霓虹粉
+  "#FFFFFF",  // 白
+] as const
+const LOGIN_BOX_FOLLOWER_SCALEING_PERIOD_HEIGHT = 70;
+const LOGIN_BOX_FOLLOWER_ROTATION_PERIOD_HEIGHT = 100;
+const LOGIN_BOX_FOLLOWER_BLUR_STRENGTH = 10;
+
+function LoginComponent({ onSubmit }: { onSubmit: CustomSubmitEvent }) {
+  const isMouseEnter = React.useRef(false);
+  const loginBoxRef = React.useRef<HTMLDivElement>(null);
+  const loginBoxFollowerRef = React.useRef<HTMLDivElement>(null);
+  const isLuxunImageLoaded = React.useRef<boolean>(luxunImageURI !== "");
+  const luxunImageRef = React.useRef<HTMLImageElement>(null);
+
+  React.useLayoutEffect(()=>{
+    if(!luxunImageRef.current) return;
+    if(!isLuxunImageLoaded.current){
+      import("../assets/tiewu.png").then((res) => {
+        if (!luxunImageRef.current) return;
+        luxunImageRef.current.src = res.default;
+        isLuxunImageLoaded.current = true;
+      })
+    }
+  },[])
+  const handleOnMouseEnterLoginBox = () => {
+    isMouseEnter.current = true;
+  };
+  const handleOnMouseLeaveLoginBox = () => {
+    isMouseEnter.current = false;
+    if (!loginBoxFollowerRef.current) return;
+    loginBoxFollowerRef.current.style.opacity = "0";
+    loginBoxFollowerRef.current.style.filter = "blur(10px)";
+  };
+  const handleOnMouseMoveLoginBox = (e: React.MouseEvent<HTMLDivElement>) => {
+    if(!isMouseEnter.current) return;
+    if(!loginBoxRef.current) return;
+    if(!loginBoxFollowerRef.current) return;
+
+    const box = loginBoxRef.current.getBoundingClientRect();
+    const mouse = {
+      x: e.clientX - box.left,
+      y: e.clientY - box.top,
+    }
+    // 先设置位置
+    loginBoxFollowerRef.current.style.left = `${mouse.x}px`;
+    loginBoxFollowerRef.current.style.top = `${mouse.y}px`;
+    // 算出鼠标在这个区域的颜色索引
+    const currentColorId = Math.ceil(mouse.y / box.height * LOGIN_BOX_FOLLOWER_COLORS.length) -1;
+    const currentColor = LOGIN_BOX_FOLLOWER_COLORS[currentColorId];
+    // 再设置颜色，因为css里有transition属性，所以是有动画的
+    loginBoxFollowerRef.current.style.backgroundColor = currentColor;
+    // 算出当前缩放的比例
+    const currentScale = Math.abs(
+      mouse.y % LOGIN_BOX_FOLLOWER_SCALEING_PERIOD_HEIGHT
+      - LOGIN_BOX_FOLLOWER_SCALEING_PERIOD_HEIGHT * .5 // 除以2
+    ) / LOGIN_BOX_FOLLOWER_SCALEING_PERIOD_HEIGHT * 2;
+    // 再设置缩放比例
+    loginBoxFollowerRef.current.style.scale = `${currentScale}`;
+    // 算出当前旋转的角度
+    const currentRotation = mouse.y / LOGIN_BOX_FOLLOWER_ROTATION_PERIOD_HEIGHT * 360;
+    // 再设置旋转角度
+    loginBoxFollowerRef.current.style.rotate = `${currentRotation}deg`;
+    // 算出当前的透明度
+    const currentOpacity = currentScale;
+    // 设置透明度
+    loginBoxFollowerRef.current.style.opacity = `${currentOpacity}`;
+    loginBoxFollowerRef.current.style.filter = `blur(${
+      (1 - currentOpacity) * LOGIN_BOX_FOLLOWER_BLUR_STRENGTH
+    }px)`;
+   };
+
   return (
-    <div className={style["login-box"]}>
+    <div
+      ref={loginBoxRef}
+      className={style["login-box"]}
+      onMouseEnter={handleOnMouseEnterLoginBox}
+      onMouseLeave={handleOnMouseLeaveLoginBox}
+      onMouseMove={handleOnMouseMoveLoginBox}
+    >
+      <div
+        ref={loginBoxFollowerRef}
+        className={style["login-box-follower"]}
+      >
+        <img 
+        src={luxunImageURI}
+        alt="鲁迅" 
+        ref={luxunImageRef}
+        />
+      </div>
       <div className={style["login-box-background"]}></div>
       <div className={style["login-box-border"]}></div>
       <h2 className={style["login-box-title"]}>LOGIN</h2>
       <LoginFormComponent onSubmit={onSubmit} />
+
     </div>
   );
 }
