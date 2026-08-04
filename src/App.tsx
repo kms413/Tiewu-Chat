@@ -18,7 +18,9 @@ const router = createBrowserRouter([
         path: "/start",
         element: <StartPage />
     }
-])
+], {
+    basename: "/Tiewu-Chat",
+})
 
 import("./containers/settings")
 
