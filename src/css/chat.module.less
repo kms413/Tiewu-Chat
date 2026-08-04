@@ -166,7 +166,7 @@
     width: 100%;
     display: flex;
     justify-content: flex-start;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 12px;
 }
 
@@ -269,19 +269,25 @@
     }
 }
 
-.input-box {
+.input-area {
     width: 100%;
-    height: 250px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 12px;
+    padding: 20px 0;
+}
+
+.input-box {
+    width: 90%;
+    height: 180px;
+    position: relative;
 }
 
 .input-component {
-    width: 90%;
-    height: 72%;
+    width: 100%;
+    height: 100%;
     position: relative;
 }
 
@@ -352,15 +358,15 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(100% + 8px);
+    bottom: calc(100% + 8px);
     z-index: 30;
     max-height: 280px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     border: 2px solid @primary-color;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, .4);
-
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, .4);
+    transform-origin: bottom center;
     @media (prefers-color-scheme: dark) {
         background-color: #202020;
     }
@@ -592,7 +598,7 @@
 .history-item {
     width: 100%;
     display: flex;
-    justify-content: stretch;
+    justify-content: flex-start;
     align-items: stretch;
     border: 1px solid @primary-color;
     background-color: transparent;

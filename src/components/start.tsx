@@ -45,14 +45,18 @@ function TitleComponent() {
       setTimeout(() => {
         const child = children[i] as HTMLDivElement;
         if (!child) return;
-        const rect = rects[i + 1];
-        child.style.transform = `translate(${rect.left + rect.width * 0.5}px, ${rect.top + lineHeight * 0.5}px)`;
+        const rect = rectsRef.current![i + 1];
         child.style.height = `${rect.height - lineHeight}px`;
+        gsap.set(child, {
+          x: rect.left + rect.width * 0.5,
+          y: rect.top + lineHeight * 0.5,
+        });
         gsap.to(child, {
           width: `${rect.width}px`,
           duration: 0.334,
           x: rect.left,
           ease: "back.out",
+          overwrite: "auto",
         });
       }, i * 100);
     }
@@ -145,12 +149,16 @@ function AnimatedLoginInput({
   inputRef,
   placeholder,
   className,
+  type = "text",
+  suffix,
   onChange,
   onKeyDown,
 }: {
   inputRef: React.RefObject<HTMLInputElement | null>;
   placeholder?: string;
   className?: string;
+  type?: "text" | "password";
+  suffix?: React.ReactNode;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }) {
@@ -162,7 +170,8 @@ function AnimatedLoginInput({
     const input = inputRef.current;
     if (!input) return;
     const pos = input.selectionStart ?? value.length;
-    const textBefore = value.slice(0, pos);
+    const textBefore =
+      type === "password" ? "•".repeat(pos) : value.slice(0, pos);
     const computed = getComputedStyle(input);
     const textIndent = parseFloat(computed.textIndent) || 0;
     const paddingLeft = parseFloat(computed.paddingLeft) || 0;
@@ -173,7 +182,7 @@ function AnimatedLoginInput({
     ctx.font = `${computed.fontStyle} ${computed.fontVariant} ${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`;
     const width = ctx.measureText(textBefore).width;
     setCaretLeft(textIndent + paddingLeft + width);
-  }, [inputRef, value]);
+  }, [inputRef, value, type]);
 
   React.useEffect(() => {
     updateCaret();
@@ -188,7 +197,7 @@ function AnimatedLoginInput({
     <div className={style["animated-input-wrapper"]}>
       <input
         ref={inputRef}
-        type="text"
+        type={type}
         value={value}
         placeholder={placeholder}
         className={className}
@@ -211,6 +220,7 @@ function AnimatedLoginInput({
         className={`${style["animated-caret"]} ${isFocused ? style["animated-caret-visible"] : ""}`}
         style={{ left: caretLeft }}
       />
+      {suffix}
     </div>
   );
 }
@@ -243,7 +253,7 @@ function LoginPasswordComponent({
   onKeyDown,
 }: {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  inputRef: React.Ref<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   onKeyDown: React.KeyboardEventHandler<HTMLInputElement>;
 }) {
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
@@ -252,20 +262,22 @@ function LoginPasswordComponent({
   };
   return (
     <LoginInputBox className={style["login-input-box-password"]}>
-      <input
-        ref={inputRef}
+      <AnimatedLoginInput
+        inputRef={inputRef}
         type={isPasswordVisible ? "text" : "password"}
         placeholder="Password"
         className={`${style["login-input"]} ${style["login-input-password"]}`}
         onChange={onChange}
         onKeyDown={onKeyDown}
+        suffix={
+          <div
+            className={style["login-input-password-icon-box"]}
+            onClick={togglePasswordVisibility}
+          >
+            {isPasswordVisible ? passwordEyeVisibleIcon : passwordEyeHiddenIcon}
+          </div>
+        }
       />
-      <div
-        className={style["login-input-password-icon-box"]}
-        onClick={togglePasswordVisibility}
-      >
-        {isPasswordVisible ? passwordEyeVisibleIcon : passwordEyeHiddenIcon}
-      </div>
     </LoginInputBox>
   );
 }
@@ -276,10 +288,54 @@ function LoginSubmitComponent({
   onClick: React.MouseEventHandler<HTMLButtonElement>;
   disabled: boolean;
 }) {
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const createRipple = (clientX?: number, clientY?: number) => {
+    const button = buttonRef.current;
+    if (!button) {
+      return;
+    }
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    const ripple = document.createElement("span");
+    ripple.className = style["login-submit-button-ripple"];
+    ripple.style.width = `${size}px`;
+    ripple.style.height = `${size}px`;
+    const x = (clientX ?? rect.left + rect.width / 2) - rect.left;
+    const y = (clientY ?? rect.top + rect.height / 2) - rect.top;
+    ripple.style.left = `${x - size / 2}px`;
+    ripple.style.top = `${y - size / 2}px`;
+    button.appendChild(ripple);
+    gsap.fromTo(
+      ripple,
+      { scale: 0, opacity: 0.35 },
+      {
+        scale: 1,
+        opacity: 0,
+        duration: 0.6,
+        ease: "power2.out",
+        onComplete: () => ripple.remove(),
+      },
+    );
+  };
+  const handleOnPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (disabled || e.button !== 0) {
+      return;
+    }
+    createRipple(e.clientX, e.clientY);
+  };
+  const handleOnKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.repeat || (e.key !== "Enter" && e.key !== " ")) {
+      return;
+    }
+    createRipple();
+  };
   return (
     <button
+      ref={buttonRef}
       className={style["login-submit-button"]}
       onClick={onClick}
+      onPointerDown={handleOnPointerDown}
+      onKeyDown={handleOnKeyDown}
       disabled={disabled}
     >
       SUBMIT

@@ -5,6 +5,7 @@ import { askAI } from "../lib/ai";
 import type { ChatMessage } from "../types/chat";
 import useAIModelsStore from "../stores/useAIModelsStore";
 import useChatStore from "../stores/useChatStore";
+import gsap from "gsap";
 
 const LuxunSayings = [
     "没有铁屋叙事，谁知道鲁迅🤣🤣🤣",
@@ -62,8 +63,19 @@ const MessageComponent = React.memo(function MessageComponent({
     isStreaming: boolean;
 }) {
     const isUser = message.role === "user";
+    const rowRef = React.useRef<HTMLDivElement>(null);
+    React.useLayoutEffect(() => {
+        if (!rowRef.current) return;
+        const fromX = isUser ? 30 : -30;
+        gsap.fromTo(
+            rowRef.current,
+            { opacity: 0, x: fromX, scale: 0.96 },
+            { opacity: 1, x: 0, scale: 1, duration: 0.35, ease: "back.out(1.2)" }
+        );
+    }, [isUser]);
     return (
         <div
+            ref={rowRef}
             className={`${style["message-row"]} ${
                 isUser
                     ? style["message-row-user"]
@@ -137,22 +149,49 @@ function ModelSelector({ disabled }: { disabled: boolean }) {
     const activeModelId = useAIModelsStore((state) => state.activeModelId);
     const setActiveModel = useAIModelsStore((state) => state.setActiveModel);
     const [isOpen, setIsOpen] = React.useState(false);
+    const [isRendered, setIsRendered] = React.useState(false);
     const rootRef = React.useRef<HTMLDivElement>(null);
+    const popupRef = React.useRef<HTMLDivElement>(null);
     const activeModel =
         models.find((model) => model.id === activeModelId) ?? models[0] ?? null;
 
-    useEffect(() => {
-        if (!isOpen) {
-            return;
+    const openPopup = React.useCallback(() => {
+        setIsRendered(true);
+        setIsOpen(true);
+    }, []);
+
+    const closePopup = React.useCallback(() => {
+        setIsOpen(false);
+    }, []);
+
+    React.useLayoutEffect(() => {
+        if (!popupRef.current) return;
+        if (isRendered && isOpen) {
+            gsap.fromTo(
+                popupRef.current,
+                { scaleY: 0 },
+                { scaleY: 1, duration: 0.334, ease: "back.out" }
+            );
+        } else if (isRendered && !isOpen) {
+            gsap.to(popupRef.current, {
+                scaleY: 0,
+                duration: 0.2,
+                ease: "power2.in",
+                onComplete: () => setIsRendered(false),
+            });
         }
+    }, [isOpen, isRendered]);
+
+    React.useEffect(() => {
+        if (!isOpen) return;
         const handleOnPointerDown = (event: MouseEvent) => {
             if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
+                closePopup();
             }
         };
         const handleOnKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
-                setIsOpen(false);
+                closePopup();
             }
         };
         document.addEventListener("mousedown", handleOnPointerDown);
@@ -161,31 +200,27 @@ function ModelSelector({ disabled }: { disabled: boolean }) {
             document.removeEventListener("mousedown", handleOnPointerDown);
             document.removeEventListener("keydown", handleOnKeyDown);
         };
-    }, [isOpen]);
+    }, [isOpen, closePopup]);
+
+    const toggleOpen = () => {
+        if (isOpen) {
+            closePopup();
+        } else {
+            openPopup();
+        }
+    };
 
     const handleSelectModel = (id: string) => {
         setActiveModel(id);
-        setIsOpen(false);
+        closePopup();
     };
 
     return (
         <div ref={rootRef} className={style["model-selector"]}>
-            <button
-                className={style["model-selector-current"]}
-                type="button"
-                disabled={disabled}
-                onClick={() => setIsOpen((value) => !value)}
-            >
-                <span className={style["model-selector-label"]}>AI</span>
-                <span className={style["model-selector-name"]}>
-                    {activeModel?.name ?? "未配置模型"}
-                </span>
-                <span className={style["model-selector-arrow"]}>
-                    {isOpen ? "▲" : "▼"}
-                </span>
-            </button>
-            {isOpen && (
-                <div className={style["model-selector-popup"]}>
+            {isRendered && (
+                <div
+                    ref={popupRef}
+                    className={style["model-selector-popup"]}>
                     {models.map((model) => (
                         <button
                             key={model.id}
@@ -215,6 +250,20 @@ function ModelSelector({ disabled }: { disabled: boolean }) {
                     )}
                 </div>
             )}
+            <button
+                className={style["model-selector-current"]}
+                type="button"
+                disabled={disabled}
+                onClick={toggleOpen}
+            >
+                <span className={style["model-selector-label"]}>AI</span>
+                <span className={style["model-selector-name"]}>
+                    {activeModel?.name ?? "未配置模型"}
+                </span>
+                <span className={style["model-selector-arrow"]}>
+                    {isOpen ? "▲" : "▼"}
+                </span>
+            </button>
         </div>
     );
 }
@@ -268,7 +317,6 @@ function InputComponent({
 function InputBox(props: InputBoxProps) {
     return (
         <div className={style["input-box"]}>
-            <ModelSelector disabled={props.isStreaming} />
             <InputComponent {...props} />
         </div>
     );
@@ -334,10 +382,26 @@ export function LeftArea({ onNewChat }: { onNewChat: () => void }) {
     const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(
         null
     );
+    const deleteButtonRefs = React.useRef<Map<string, HTMLButtonElement>>(new Map());
 
     useEffect(() => {
         void useChatStore.getState().initSessions();
     }, []);
+
+    useEffect(() => {
+        if (!confirmDeleteId) return;
+        const handlePointerDown = (event: MouseEvent) => {
+            const button = deleteButtonRefs.current.get(confirmDeleteId);
+            if (button && button.contains(event.target as Node)) {
+                return;
+            }
+            setConfirmDeleteId(null);
+        };
+        document.addEventListener("mousedown", handlePointerDown);
+        return () => {
+            document.removeEventListener("mousedown", handlePointerDown);
+        };
+    }, [confirmDeleteId]);
 
     const visibleSessions = sessions.filter(
         (session) => session.messageCount > 0
@@ -366,7 +430,8 @@ export function LeftArea({ onNewChat }: { onNewChat: () => void }) {
                         <button
                             type="button"
                             className={style["history-item-main"]}
-                            onClick={() => {
+                            onClick={(event) => {
+                                event.stopPropagation();
                                 setConfirmDeleteId(null);
                                 void useChatStore.getState().openSession(session.id);
                             }}
@@ -380,10 +445,17 @@ export function LeftArea({ onNewChat }: { onNewChat: () => void }) {
                             </span>
                         </button>
                         <button
+                            ref={(node) => {
+                                if (node) {
+                                    deleteButtonRefs.current.set(session.id, node);
+                                } else {
+                                    deleteButtonRefs.current.delete(session.id);
+                                }
+                            }}
                             type="button"
                             className={style["history-item-delete"]}
-                            onBlur={() => setConfirmDeleteId(null)}
-                            onClick={() => {
+                            onClick={(event) => {
+                                event.stopPropagation();
                                 if (confirmDeleteId === session.id) {
                                     setConfirmDeleteId(null);
                                     void useChatStore
@@ -517,14 +589,17 @@ export function RightArea() {
                     isMessagesLoading={isMessagesLoading}
                 />
             )}
-            <InputBox
-                value={inputValue}
-                isStreaming={isStreaming}
-                isSendDisabled={!inputValue.trim()}
-                onChange={handleOnInputChange}
-                onSend={handleOnSend}
-                onStop={handleOnStop}
-            />
+            <div className={style["input-area"]}>
+                <ModelSelector disabled={isStreaming} />
+                <InputBox
+                    value={inputValue}
+                    isStreaming={isStreaming}
+                    isSendDisabled={!inputValue.trim()}
+                    onChange={handleOnInputChange}
+                    onSend={handleOnSend}
+                    onStop={handleOnStop}
+                />
+            </div>
         </div>
     );
 }

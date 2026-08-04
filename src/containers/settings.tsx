@@ -197,12 +197,7 @@ function Settings({ onClose }: { onClose: () => void }) {
     return (
         <Container onClose={onClose}>
             <SettingsBody>
-                <SettingsSection>
-                    <SettingsSectionHead 
-                        title="用户设置"
-                    />
 
-                </SettingsSection>
                 <SettingsSection>
                     <SettingsSectionHead
                         title="AI 模型"

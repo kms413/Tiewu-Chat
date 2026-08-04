@@ -20,6 +20,10 @@ const router = createBrowserRouter([
     }
 ])
 
+import("./containers/settings")
+
+
+
 export default function App() {
     return <RouterProvider router={router} />;
 }

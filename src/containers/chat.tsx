@@ -20,14 +20,13 @@ function Main({
 }) {
   const jumpEndStore = useJumpEndStore();
   jumpEndStore.remove();
-  const activeSessionId = useChatStore((state) => state.activeSessionId);
   if(isTransition) jumpStart()
   const handleOnNewChat = () => {
     useChatStore.getState().startNewSession();
   };
   return <Container>
     <LeftArea onNewChat={handleOnNewChat} />
-    <RightArea key={activeSessionId ?? "none"} />
+    <RightArea />
   </Container>;
 }
 
