@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import useStoredState from "../lib/useStoredState"
+import useStoredState from "../lib/use.stored.state"
 import { useLayoutEffect } from "react"
 
 export default function Redirect() {

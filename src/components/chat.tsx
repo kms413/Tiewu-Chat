@@ -38,11 +38,14 @@ function LuxunAvatar({ className }: { className?: string }) {
 function WelcomeScreenTitle() {
     return (
         <div>
-            <h1 className={style["welcome-screen-title"]}>
+            <h1
+                className={style["welcome-screen-title"]}
+            >铁屋Chat：铁屋叙事同款AI工作台</h1>
+            <span className={style["welcome-screen-luxun-saying"]}>
                 <LuxunAvatar className={style["welcome-screen-luxun-image"]} />
                 <i>鲁迅名言：</i>
                 {RANDOM_LUXUN_SAYING}
-            </h1>
+            </span>
         </div>
     );
 }
@@ -90,11 +93,11 @@ const MessageComponent = React.memo(function MessageComponent({
                         : style["message-bubble-assistant"]
                 }`}
             >
-                {!isUser && message.modelName && (
+                {/* {!isUser && message.modelName && (
                     <div className={style["message-model-label"]}>
                         {message.modelName}
                     </div>
-                )}
+                )} */}
                 {message.content}
                 {isStreaming && (
                     <span className={style["message-streaming-cursor"]}></span>

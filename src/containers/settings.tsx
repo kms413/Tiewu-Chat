@@ -18,10 +18,12 @@ import {
     AccountDeletion,
     type ModelEditorState,
     type UserEditorState,
+    SettingsDescription,
+    SettingsAboutButton,
 } from "../components/settings";
 import useAIModelsStore from "../stores/useAIModelsStore";
 import { BUILTIN_AI_MODELS } from "../lib/ai.models";
-import useStoredState from "../lib/useStoredState";
+import useStoredState from "../lib/use.stored.state";
 import { sha256 } from "../lib/hash";
 import { getGlobalSystemPrompt, setGlobalSystemPrompt } from "../lib/system.prompt";
 
@@ -34,6 +36,13 @@ const EMPTY_EDITOR: ModelEditorState = {
     description: "",
     systemPrompt: "",
 };
+
+let updaterModule: (typeof import("../lib/updater")) | null = null
+const importUpdaterModule = import("../lib/updater").then(module=>{
+    updaterModule = module
+})
+
+
 
 function Settings({ onClose }: { onClose: () => void }) {
     const navigate = useNavigate();
@@ -144,12 +153,33 @@ function Settings({ onClose }: { onClose: () => void }) {
         setErrorText("");
     }
 
+    async function handleOnUpdateBuiltinModels(){
+        if(!updaterModule){
+            await importUpdaterModule
+        }
+        if(!updaterModule){
+            return
+        }
+        await updaterModule.updateBuiltinModels()
+    }
+
     function handlePresetChange(presetId: string) {
         setSelectedPresetId(presetId);
     }
 
     function handleSaveSystemPrompt() {
         setGlobalSystemPrompt(systemPrompt.trim());
+    }
+
+    async function handleOnUpdateSystemPrompt(){
+        if(!updaterModule){
+            await importUpdaterModule
+        }
+        if(!updaterModule){
+            return
+        }
+        await updaterModule.updateSystemPrompt()
+        setSystemPrompt(() => getGlobalSystemPrompt())
     }
 
     function handleCancelSystemPrompt() {
@@ -207,6 +237,7 @@ function Settings({ onClose }: { onClose: () => void }) {
                             </SettingsActionButton>
                         }
                     />
+                                    <SettingsActiveModelTip activeModel={activeModel} />
                     <ModelGrid
                         models={models}
                         activeModelId={activeModelId}
@@ -221,6 +252,9 @@ function Settings({ onClose }: { onClose: () => void }) {
                             暂无模型，点击“新建模型”添加
                         </SettingsEmpty>
                     )}
+                    <SettingsActionButton onClick={handleOnUpdateBuiltinModels}>
+                        更新/初始化内置模型
+                    </SettingsActionButton>
                 </SettingsSection>
                 {editor && (
                     <SettingsSection>
@@ -254,6 +288,9 @@ function Settings({ onClose }: { onClose: () => void }) {
                         onSave={handleSaveSystemPrompt}
                         onCancel={handleCancelSystemPrompt}
                     />
+                    <SettingsActionButton onClick={handleOnUpdateSystemPrompt}>
+                        更新/初始化系统提示词
+                    </SettingsActionButton>
                 </SettingsSection>
                 <SettingsSection>
                     <SettingsSectionHead title="用户设置" />
@@ -281,7 +318,15 @@ function Settings({ onClose }: { onClose: () => void }) {
                         <SettingsError>{deleteErrorText}</SettingsError>
                     )}
                 </SettingsSection>
-                <SettingsActiveModelTip activeModel={activeModel} />
+                <SettingsSection>
+                    <SettingsSectionHead title="关于" />
+                    <SettingsDescription>
+                        关于此项目的信息
+                    </SettingsDescription>
+                    <SettingsAboutButton>
+                        关于项目
+                    </SettingsAboutButton>
+                </SettingsSection>
             </SettingsBody>
         </Container>
     );

@@ -1,111 +1,13 @@
-const AI_MODELS_STORAGE_KEY = "ai-models";
-const LEGACY_AI_SETTINGS_KEY = "ai-settings";
+import {
+    BUILTIN_AI_MODELS,
+    AI_MODELS_STORAGE_KEY,
+    LEGACY_AI_SETTINGS_KEY
+} from "../assets/builtin.models"
 
-const DEFAULT_SYSTEM_PROMPT = "你是铁屋AI，一个熟悉鲁迅梗、爱玩原神、偶尔扮演朱元璋的赛博助手。请用轻松、幽默、略带中二的方式回答用户。";
 
-const BUILTIN_AI_MODELS: AIModelConfig[] = [
-    {
-        id: "deepseek-v4-flash",
-        name: "DeepSeek V4 Flash",
-        baseURL: "https://api.deepseek.com",
-        model: "deepseek-v4-flash",
-        apiKey: "",
-        description: "兼顾轻量与强大的模型。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "deepseek-v4-pro",
-        name: "DeepSeek V4 Pro",
-        baseURL: "https://api.deepseek.com",
-        model: "deepseek-v4-pro",
-        apiKey: "",
-        description: "DeepSeek的最强模型，但正式版还没来。推荐用Flash。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "kimi-k2.6",
-        name: "Kimi K2.6",
-        baseURL: "https://api.moonshot.cn/v1",
-        model: "kimi-k2.6",
-        apiKey: "",
-        description: "Kimi 的前几代模型，聊天还行。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "kimi-k2.7-code",
-        name: "Kimi K2.7 Code",
-        baseURL: "https://api.moonshot.cn/v1",
-        model: "kimi-k2.7-code",
-        apiKey: "",
-        description: "Kimi 的上一代旗舰模型。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "kimi-k3",
-        name: "Kimi K3",
-        baseURL: "https://api.moonshot.cn/v1",
-        model: "kimi-k3",
-        apiKey: "",
-        description: "Kimi 的最强旗舰模型，比肩国外顶级模型。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "mimo-v2.5",
-        name: "MiMo V2.5",
-        baseURL: "https://api.xiaomimimo.com/v1",
-        model: "mimo-v2.5",
-        apiKey: "",
-        description: "小米的 Mimo 模型，性价比很高。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "mimo-v2.5-pro",
-        name: "MiMo V2.5 Pro",
-        baseURL: "https://api.xiaomimimo.com/v1",
-        model: "mimo-v2.5-pro",
-        apiKey: "",
-        description: "小米的旗舰模型，现在逐渐落后。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "qwen-3.7-plus",
-        name: "Qwen 3.7 Plus",
-        baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        model: "qwen3.7-plus",
-        apiKey: "",
-        description: "千问的 上一代次旗舰模型。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "glm-5.1",
-        name: "GLM 5.1",
-        baseURL: "https://open.bigmodel.cn/api/paas/v4",
-        model: "glm-5.1",
-        apiKey: "",
-        description: "智谱上一代模型。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
-    {
-        id: "glm-5.2",
-        name: "GLM 5.2",
-        baseURL: "https://open.bigmodel.cn/api/paas/v4",
-        model: "glm-5.2",
-        apiKey: "",
-        description: "智谱的最新模型，贵的要死。",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        builtin: true,
-    },
 
-];
+
+
 
 function createModelId(): string {
     return `model-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;

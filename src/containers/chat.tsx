@@ -1,59 +1,48 @@
 import { useNavigate } from "react-router-dom";
 import React from "react";
-import { jumpStart } from "../lib/animateJump";
-import useStoredState from "../lib/useStoredState";
+import { jumpStart } from "../lib/animate.jump";
+import useStoredState from "../lib/use.stored.state";
 import useJumpEndStore from "../stores/useJumpEndStore";
 import useChatStore from "../stores/useChatStore";
-import {
-  Container,
-  LeftArea,
-  RightArea
-} from "../components/chat";
-import getUserData from "../lib/userdata";
+import { Container, LeftArea, RightArea } from "../components/chat";
+import getUserData from "../lib/user.data";
 
-let userData: UserData | null = null
+let userData: UserData | null = null;
 
-function Main({
-  isTransition = false
-}: {
-  isTransition?: boolean
-}) {
+function Main() {
   const jumpEndStore = useJumpEndStore();
-  jumpEndStore.remove();
-  if(isTransition) jumpStart()
+
+  if (jumpEndStore.remove) {
+    jumpStart();
+    jumpEndStore.remove();
+  }
   const handleOnNewChat = () => {
     useChatStore.getState().startNewSession();
   };
-  return <Container>
-    <LeftArea onNewChat={handleOnNewChat} />
-    <RightArea />
-  </Container>;
+  return (
+    <Container>
+      <LeftArea onNewChat={handleOnNewChat} />
+      <RightArea />
+    </Container>
+  );
 }
 
-function Redirect({
-  isTransition = false
-}: {
-  isTransition?: boolean
-}) {
+function Redirect() {
   const navigate = useNavigate();
   const [user] = useStoredState<User>("user", null);
 
   React.useLayoutEffect(() => {
     (async () => {
-      userData = await getUserData()
+      userData = await getUserData();
       if (!user || !userData) {
         navigate("/start");
       }
-    })()
+    })();
   }, [user, navigate]);
-  return <Main isTransition={isTransition} />;
+  return <Main/>;
 }
 
-function Chat({
-  isTransition = false
-}: {
-  isTransition?: boolean
-}) {
-  return <Redirect isTransition={isTransition}/>;
+function Chat() {
+  return <Redirect />;
 }
 export default Chat;

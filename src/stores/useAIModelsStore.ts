@@ -11,6 +11,7 @@ type AIModelsStore = {
     activeModelId: string;
     isLoaded: boolean;
     init: () => void;
+    overwriteModels: (models: AIModelConfig[])=>void
     getActiveModel: () => AIModelConfig | null;
     getModelById: (id: string) => AIModelConfig | null;
     setActiveModel: (id: string) => void;
@@ -41,6 +42,11 @@ const useAIModelsStore = create<AIModelsStore>((set, get) => ({
     models: initial.models,
     activeModelId: initial.activeModelId,
     isLoaded: true,
+    overwriteModels: (models: AIModelConfig[]) => {
+        set({
+            models,
+        })
+    },
     init: () => {},
     getActiveModel: () => resolveAIModel(get().models, get().activeModelId),
     getModelById: (id) => resolveAIModel(get().models, id),
@@ -89,6 +95,7 @@ const useAIModelsStore = create<AIModelsStore>((set, get) => ({
         });
         schedulePersist(get);
     },
+
 }));
 
 export default useAIModelsStore;

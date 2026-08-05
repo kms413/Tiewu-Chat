@@ -9,7 +9,9 @@ import("../assets/tiewu.png").then((module) => {
 });
 
 function StartComponent({ children }: { children: React.ReactNode }) {
-  return <div className={style["content-box"]}>{children}</div>;
+  return <div className={style["content-box"]}>
+    {children}
+  </div>;
 }
 function TitleComponent() {
   const titleRef = React.useRef<HTMLHeadingElement>(null);
@@ -436,6 +438,7 @@ function LoginFormComponent({ onSubmit }: { onSubmit: CustomSubmitEvent }) {
         disabled={isSubmitButtonDisabled}
       />
       <LoginDetailsComponent />
+      <span className={style['login-tip']}>提示：用户名和密码完全是摆设</span>
     </div>
   );
 }
@@ -532,6 +535,8 @@ function LoginComponent({ onSubmit }: { onSubmit: CustomSubmitEvent }) {
       >
         <img 
         src={luxunImageURI}
+        draggable={false}
+        style={{ userSelect: "none" }}
         alt="鲁迅" 
         ref={luxunImageRef}
         />
@@ -540,7 +545,6 @@ function LoginComponent({ onSubmit }: { onSubmit: CustomSubmitEvent }) {
       <div className={style["login-box-border"]}></div>
       <h2 className={style["login-box-title"]}>LOGIN</h2>
       <LoginFormComponent onSubmit={onSubmit} />
-
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import style from "../css/settings.module.less"
+import { Link } from "react-router-dom"
 import React, { useLayoutEffect } from "react"
 import gsap from "gsap"
 
@@ -27,8 +28,8 @@ export function TopMenu({ onClose, containerRef }: {
             onClick={handleOnClose}
         >
             <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-                <line x1="10" y1="10" x2="90" y2="90" stroke-width="8" stroke-linecap="round" />
-                <line x1="90" y1="10" x2="10" y2="90" stroke-width="8" stroke-linecap="round" />
+                <line x1="10" y1="10" x2="90" y2="90" strokeWidth="8" strokeLinecap="round" />
+                <line x1="90" y1="10" x2="10" y2="90" strokeWidth="8" strokeLinecap="round" />
             </svg>
         </button>
     </div>
@@ -359,6 +360,18 @@ export function SettingsActionButton({
     );
 }
 
+
+export function SettingsDescription({ children }: { children: React.ReactNode }) {
+    return <span className={style["settings-description"]}>{children}</span>
+}
+export function SettingsAboutButton({
+    children
+}: {
+    children: React.ReactNode
+}){
+    return <Link to="/about" className={style["settings-about-button"]}>{children}</Link>
+}
+
 export function SettingsActionButtonSecondary({
     children,
     onClick,
@@ -468,7 +481,7 @@ export function SystemPromptEditor({
     return (
         <div className={style["model-editor"]}>
             <label className={style["settings-field"]}>
-                <span className={style["settings-label"]}>系统提示词</span>
+                <span className={style["settings-label"]}>系统提示词（默认提示词由KIMI生成）</span>
                 <textarea
                     className={`${style["settings-input"]} ${style["settings-textarea"]}`}
                     placeholder="给所有模型设定默认角色或行为规则"

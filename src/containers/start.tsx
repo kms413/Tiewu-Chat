@@ -5,9 +5,9 @@ import StartComponent, {
 } from "../components/start";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import theme from "../css/theme.module.less";
-import { jumpEnd } from "../lib/animateJump";
+import { jumpEnd } from "../lib/animate.jump";
 import useJumpEndStore, { type JumpEndStore } from "../stores/useJumpEndStore";
-import useStoredState from "../lib/useStoredState";
+import useStoredState from "../lib/use.stored.state";
 import React from "react";
 import initUserData from "../lib/init.user.data";
 import { sha256 } from "../lib/hash";
