@@ -6,6 +6,7 @@
   display: flex;
   gap: 20px;
 }
+
 .title-box {
   width: calc(50% - 5px);
   height: calc(100% - 5px);
@@ -13,23 +14,32 @@
   justify-content: flex-end;
   align-items: center;
 }
+
 .title {
   font-family: "ysbth";
   font-weight: 100;
   font-size: 120px;
+
   @media (prefers-color-scheme: dark) {
     color: rgb(255, 255, 255);
   }
+
+  @media (prefers-color-scheme: light) {
+    color: rgb(24, 24, 24);
+  }
+
   user-select: none;
   z-index: 2;
 }
+
 .title-box-shadow {
   position: fixed;
   left: 0;
   top: 0;
   z-index: 1;
 }
-.title-box-shadow > div {
+
+.title-box-shadow>div {
   position: fixed;
   left: 0;
   background-color: color-mix(in srgb, @primary-color 30%, transparent);
@@ -45,15 +55,18 @@
   position: relative;
   transform-style: preserve-3d;
   animation: flipPageIn 0.4s cubic-bezier(0.58, 0.08, 0.26, 1.1) forwards;
+
   &:hover {
     .login-box-background {
       transform: rotate(2deg);
     }
+
     .login-box-border {
       transform: rotate(-2deg);
     }
   }
 }
+
 .login-box-follower {
   width: 100px;
   height: 100px;
@@ -68,11 +81,13 @@
     scale 0.1s ease-out,
     rotate 0.1s ease-out;
 }
-.login-box-follower>img{
+
+.login-box-follower>img {
   opacity: .5;
   width: 100%;
   height: 100%;
 }
+
 .login-box-border {
   position: absolute;
   left: 0;
@@ -93,28 +108,36 @@
   width: 100%;
   height: 100%;
   transform: rotate(-2deg);
+
   @media (prefers-color-scheme: dark) {
     background-color: #e7e7e7;
   }
+
   @media (prefers-color-scheme: light) {
-    background-color: #4e997c;
+    background-color: color-mix(in srgb, @primary-color, 82% rgb(244, 244, 244));
   }
+
   z-index: -1;
   transition: transform 0.3s ease-in-out;
 }
+
 .login-box-title {
   font-family: "ysbth";
   font-weight: 100;
   font-size: 38px;
+
   @media (prefers-color-scheme: dark) {
     color: rgb(27, 27, 27);
   }
+
   @media (prefers-color-scheme: light) {
-    color: rgb(255, 255, 255);
+    color: rgb(36, 35, 35);
   }
+
   user-select: none;
   margin-top: 50px;
 }
+
 .login-submit-button {
   width: 90%;
   height: 40px;
@@ -130,15 +153,19 @@
     background-color: @primary-color;
     color: rgb(0, 0, 0);
   }
+
   @media (prefers-color-scheme: light) {
-    background-color: rgba(0, 0, 0, 0.445);
-    opacity: 0.8;
-    color: rgb(255, 255, 255);
-    border: 3px solid white;
+    background-color: @primary-color;
+    opacity: 0.95;
+    color: rgb(0, 0, 0);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 14px color-mix(in srgb, @primary-color, transparent 40%);
   }
+
   user-select: none;
   transition: opacity 0.3s ease-in-out;
 }
+
 .login-submit-button-ripple {
   position: absolute;
   border-radius: 50%;
@@ -146,6 +173,7 @@
   pointer-events: none;
   transform: translateZ(0);
 }
+
 .login-submit-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -153,10 +181,12 @@
   @media (prefers-color-scheme: dark) {
     background-color: @primary-color;
   }
+
   @media (prefers-color-scheme: light) {
-    background-color: rgba(0, 0, 0, 0.445);
+    background-color: @primary-color;
   }
 }
+
 .login-form-box {
   --input-width: 90%;
   --input-height: 40px;
@@ -177,11 +207,13 @@
     opacity: 0;
     transform: perspective(1200px) rotateY(-90deg);
   }
+
   100% {
     opacity: 1;
     transform: perspective(1200px) rotateY(0deg);
   }
 }
+
 .login-tips {
   font-family: "ysbth";
   font-weight: 100;
@@ -192,6 +224,7 @@
   position: absolute;
   translate: 0 -2em;
 }
+
 .animated-input-wrapper {
   position: relative;
   display: flex;
@@ -199,15 +232,18 @@
   width: 100%;
   height: 100%;
 }
-.animated-input-wrapper > input {
+
+.animated-input-wrapper>input {
   flex: 1 1 auto;
   min-width: 0;
   width: auto;
 }
-.login-tip{
+
+.login-tip {
   color: rgba(241, 30, 30, 0.644);
   user-select: none;
 }
+
 .animated-caret {
   position: absolute;
   top: 50%;
@@ -216,17 +252,21 @@
   transform: translateY(-50%);
   pointer-events: none;
   opacity: 0;
-  transition: left 75ms cubic-bezier(0,.5,.54,.94);
+  transition: left 75ms cubic-bezier(0, .5, .54, .94);
+
   @media (prefers-color-scheme: dark) {
     background-color: rgb(41, 41, 41);
   }
+
   @media (prefers-color-scheme: light) {
     background-color: #4e997c;
   }
 }
+
 .animated-caret-visible {
   opacity: 1;
 }
+
 .login-input-box {
   width: var(--input-width);
   height: var(--input-height);
@@ -234,6 +274,7 @@
   position: relative;
   white-space: nowrap;
 }
+
 .login-input-box::before {
   content: "";
   position: absolute;
@@ -241,18 +282,22 @@
   top: 0;
 
   height: 90%;
+
   @media (prefers-color-scheme: dark) {
     background-color: color-mix(in srgb, @primary-color, black 70%);
     width: 90%;
     opacity: 0.1;
   }
+
   @media (prefers-color-scheme: light) {
     background-color: color-mix(in srgb, @primary-color, white 70%);
     width: 100%;
   }
+
   z-index: -1;
   transform: rotate(-1deg);
 }
+
 .login-input {
   display: inline-block;
   width: 100%;
@@ -263,32 +308,39 @@
   font-size: 20px;
   font-weight: 50;
   text-indent: var(--input-text-indent);
+
   @media (prefers-color-scheme: dark) {
     color: rgb(41, 41, 41);
   }
+
   @media (prefers-color-scheme: light) {
     color: #4e997c;
   }
 }
+
 input:autofill {
   background-color: transparent !important;
   filter: unset;
 }
+
 // Firefox 自动填充会给 input 涂上默认黄色，覆盖为透明保持设计一致
 .login-input:-moz-autofill {
   background-color: transparent !important;
   box-shadow: 0 0 0 1000px transparent inset !important;
   filter: unset;
 }
+
 // Chrome/Safari 自动填充的淡蓝底也统一压成透明
 .login-input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px transparent inset;
   -webkit-text-fill-color: currentColor;
 }
+
 .login-input-box-password {
   display: flex;
   align-items: center;
 }
+
 .login-input.login-input-password {
   width: 80%;
 }
@@ -298,12 +350,14 @@ input:autofill {
   min-width: 0;
   width: auto;
 }
+
 .login-input-password[type="password"]:not(:placeholder-shown) {
   letter-spacing: -2px;
 }
 
 // 隐藏输入密码时的眼睛图标（全浏览器兼容）
 .login-input-password[type="password"] {
+
   // IE / 旧版 Edge
   &::-ms-reveal {
     display: none !important;
@@ -351,6 +405,7 @@ input:autofill {
 .login-input::placeholder {
   text-indent: var(--input-text-indent);
 }
+
 .login-details-tech-support {
   font-size: 16px;
   font-weight: 400;
@@ -361,4 +416,67 @@ input:autofill {
     "微软雅黑",
     sans-serif,
     "ysbth";
+}
+
+/* ---- 手机端：纵向排布，保持铁屋的错落质感 ---- */
+@media (max-width: 767px) {
+  .content-box {
+    box-sizing: border-box;
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px 16px 32px;
+    overflow: hidden;
+  }
+
+  .title-box {
+    width: 100%;
+    height: auto;
+    justify-content: center;
+    padding: 18px 0 6px;
+  }
+
+  .title {
+    font-size: 56px;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    min-height: 360px;
+  }
+
+  .login-box-title {
+    font-size: 32px;
+    margin-top: 24px;
+  }
+
+  .login-form-box {
+    width: 100%;
+    height: auto;
+    padding: 28px 16px 40px;
+    gap: 24px;
+  }
+
+  .login-submit-button {
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .login-tips {
+    translate: 0 -1.5em;
+  }
+
+  .login-details-tech-support {
+    font-size: 14px;
+    padding: 0 4px;
+    word-break: break-all;
+    text-align: center;
+  }
 }

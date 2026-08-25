@@ -30,17 +30,15 @@ async function login(
   navigate("/chat");
 }
 
-console.log(theme);
-
 function Start() {
   const currentNavigate = useNavigate();
   const jumpEndStore = useJumpEndStore();
   const [user, setUser] = useStoredState<User>("user", null);
-  React.useLayoutEffect(()=>{
-    if(user){
+  React.useLayoutEffect(() => {
+    if (user) {
       currentNavigate("/chat");
     }
-  },[user, currentNavigate])
+  }, [user, currentNavigate])
   return (
     <Fullscreen>
       <StartComponent>
