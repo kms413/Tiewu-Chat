@@ -4,7 +4,6 @@ import StartComponent, {
   LoginComponent,
 } from "../components/start";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
-import theme from "../css/theme.module.less";
 import { jumpEnd } from "../lib/animate.jump";
 import useJumpEndStore, { type JumpEndStore } from "../stores/useJumpEndStore";
 import useStoredState from "../lib/use.stored.state";
