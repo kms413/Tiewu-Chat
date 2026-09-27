@@ -5,7 +5,7 @@ import {
     removeSession,
     saveSession,
 } from "../lib/chat.history";
-import type { ChatMessage } from "../types/chat";
+import type { ChatMessage, ChatMessageStats } from "../types/chat";
 import useAIModelsStore from "./useAIModelsStore";
 
 type ChatStoreState = {
@@ -23,6 +23,8 @@ type ChatStoreState = {
     appendUserMessage: (content: string) => void;
     appendAssistantMessage: (model: AIModelConfig) => ChatMessage;
     appendChunk: (messageId: string, chunk: string) => void;
+    appendReasoningChunk: (messageId: string, chunk: string) => void;
+    setMessageStats: (messageId: string, stats: ChatMessageStats) => void;
     setStreaming: (messageId: string | null) => void;
     finishStreaming: () => Promise<void>;
     flushActiveSession: () => Promise<void>;
@@ -227,6 +229,26 @@ const useChatStore = create<ChatStoreState>((set, get) => {
             }));
         },
 
+        appendReasoningChunk: (messageId, chunk) => {
+            set((state) => ({
+                messages: state.messages.map((message) =>
+                    message.id === messageId
+                        ? { ...message, reasoning: (message.reasoning ?? "") + chunk }
+                        : message
+                ),
+            }));
+        },
+
+        setMessageStats: (messageId, stats) => {
+            set((state) => ({
+                messages: state.messages.map((message) =>
+                    message.id === messageId
+                        ? { ...message, stats: { ...message.stats, ...stats } }
+                        : message
+                ),
+            }));
+        },
+
         setStreaming: (messageId) => {
             set({
                 isStreaming: messageId !== null,
@@ -242,7 +264,7 @@ const useChatStore = create<ChatStoreState>((set, get) => {
                     const target = state.messages.find(
                         (message) => message.id === messageId
                     );
-                    return target && !target.content
+                    return target && !target.content && !target.reasoning
                         ? {
                               messages: state.messages.filter(
                                   (message) => message.id !== messageId

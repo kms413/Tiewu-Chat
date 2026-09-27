@@ -73,39 +73,139 @@ function composeReply(messages: ChatMessage[]): string {
   return pickByHash(text, DEFAULT_REPLIES);
 }
 
+export type AIUsage = {
+  promptTokens: number;
+  completionTokens: number;
+  cachedTokens?: number;
+};
+
+export type AIStreamChunk =
+  | { kind: "content"; text: string }
+  | { kind: "reasoning"; text: string }
+  | { kind: "usage"; usage: AIUsage };
+
+const CJK_CHAR_PATTERN =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+
+export function estimateTokens(text: string): number {
+  let cjk = 0;
+  let other = 0;
+  for (const char of text) {
+    if (CJK_CHAR_PATTERN.test(char)) {
+      cjk += 1;
+    } else {
+      other += 1;
+    }
+  }
+  return cjk + other / 4;
+}
+
+const MOCK_REASONING =
+  "（本地模拟思考）先看清问题，再翻一翻鲁迅语录……结论是：都行，但要先收广告费。";
+
 async function* streamMockReply(
   messages: ChatMessage[],
   model: AIModelConfig,
-): AsyncGenerator<string> {
+  thinking: boolean,
+): AsyncGenerator<AIStreamChunk> {
   const hasInternet = navigator.onLine;
   const prefix = hasInternet
     ? `【${model.name} 未配置 API Key，铁屋AI本地发电中】`
     : "【你没联网】";
   const reply = prefix + composeReply(messages);
+  if (thinking) {
+    for (const char of Array.from(MOCK_REASONING)) {
+      await sleep(Math.random() * CHUNK_DELAY_MAX);
+      yield { kind: "reasoning", text: char };
+    }
+  }
   for (const char of Array.from(reply)) {
     await sleep(Math.random() * CHUNK_DELAY_MAX);
-    yield char;
+    yield { kind: "content", text: char };
   }
+  const output = thinking ? `${MOCK_REASONING}${reply}` : reply;
+  yield {
+    kind: "usage",
+    usage: {
+      promptTokens: 64,
+      completionTokens: Math.max(1, Math.round(estimateTokens(output))),
+      cachedTokens: 38,
+    },
+  };
 }
 
-function parseSSEChunk(line: string): { done: boolean; content: string } {
+function pickDeltaText(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function toTokenCount(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value
+    : 0;
+}
+
+function parseUsage(value: unknown): AIUsage | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const usage = value as Record<string, unknown>;
+  const promptTokens = toTokenCount(usage.prompt_tokens);
+  const completionTokens = toTokenCount(usage.completion_tokens);
+  if (!promptTokens && !completionTokens) {
+    return null;
+  }
+  const rawHit = usage.prompt_cache_hit_tokens;
+  const details = usage.prompt_tokens_details;
+  const detailsCached =
+    details && typeof details === "object"
+      ? (details as Record<string, unknown>).cached_tokens
+      : undefined;
+  const cacheReported =
+    typeof rawHit === "number" || typeof detailsCached === "number";
+  const cachedTokens = toTokenCount(rawHit) || toTokenCount(detailsCached);
+  return {
+    promptTokens,
+    completionTokens,
+    cachedTokens: cacheReported ? cachedTokens : undefined,
+  };
+}
+
+function parseSSEChunk(line: string): {
+  done: boolean;
+  chunks: AIStreamChunk[];
+} {
   const trimmed = line.trim();
   if (!trimmed.startsWith("data:")) {
-    return { done: false, content: "" };
+    return { done: false, chunks: [] };
   }
   const data = trimmed.slice(5).trim();
   if (data === "[DONE]") {
-    return { done: true, content: "" };
+    return { done: true, chunks: [] };
   }
   try {
     const json = JSON.parse(data);
-    const delta = json.choices?.[0]?.delta?.content;
-    return {
-      done: false,
-      content: typeof delta === "string" ? delta : "",
-    };
+    const chunks: AIStreamChunk[] = [];
+    const usage = parseUsage(json.usage);
+    if (usage) {
+      chunks.push({ kind: "usage", usage });
+    }
+    const delta = json.choices?.[0]?.delta;
+    if (delta && typeof delta === "object") {
+      const reasoning =
+        pickDeltaText(delta.reasoning_content) ||
+        pickDeltaText(delta.reasoning) ||
+        pickDeltaText(delta.thinking);
+      const content = pickDeltaText(delta.content);
+      if (reasoning) {
+        chunks.push({ kind: "reasoning", text: reasoning });
+      }
+      if (content) {
+        chunks.push({ kind: "content", text: content });
+      }
+    }
+    return { done: false, chunks };
   } catch {
-    return { done: false, content: "" };
+    return { done: false, chunks: [] };
   }
 }
 
@@ -141,27 +241,92 @@ username: ${userInfo?.name}
   return chatMessages;
 }
 
-async function* streamRemoteReply(
+let thinkingParamSupported = true;
+let usageParamSupported = true;
+
+const THINKING_PARAM_PATTERN = /enable_thinking|['"]thinking['"]/i;
+const USAGE_PARAM_PATTERN = /stream_options|include_usage/i;
+const UNKNOWN_PARAM_PATTERN =
+  /unknown parameter|unknown field|unexpected.*(?:property|field|parameter)|unrecognized request argument|extra.*(?:not permitted|inputs are not allowed)/i;
+
+function buildRequestBody(
   messages: ChatMessage[],
   model: AIModelConfig,
+  thinking: boolean,
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model: model.model,
+    messages: buildChatMessages(messages, model.systemPrompt),
+    stream: true,
+  };
+  if (thinking && thinkingParamSupported) {
+    body.enable_thinking = true;
+    body.thinking = { type: "enabled" };
+  }
+  if (usageParamSupported) {
+    body.stream_options = { include_usage: true };
+  }
+  return body;
+}
+
+async function sendChatStream(
+  model: AIModelConfig,
+  body: Record<string, unknown>,
   signal?: AbortSignal,
-): AsyncGenerator<string> {
-  const response = await fetch(
-    `${model.baseURL.replace(/\/+$/, "")}/chat/completions`,
-    {
+): Promise<Response> {
+  const post = (payload: Record<string, unknown>) =>
+    fetch(`${model.baseURL.replace(/\/+$/, "")}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${model.apiKey}`,
       },
-      body: JSON.stringify({
-        model: model.model,
-        messages: buildChatMessages(messages, model.systemPrompt),
-        stream: true,
-      }),
+      body: JSON.stringify(payload),
       signal,
-    },
-  );
+    });
+  const response = await post(body);
+  if (response.ok || response.status !== 400) {
+    return response;
+  }
+  const errorText = await response.text().catch(() => "");
+  const mentionsThinking = THINKING_PARAM_PATTERN.test(errorText);
+  const mentionsUsage = USAGE_PARAM_PATTERN.test(errorText);
+  const unknownParam =
+    !mentionsThinking &&
+    !mentionsUsage &&
+    UNKNOWN_PARAM_PATTERN.test(errorText);
+  const dropThinking =
+    "enable_thinking" in body && (mentionsThinking || unknownParam);
+  const dropUsage =
+    "stream_options" in body && (mentionsUsage || unknownParam);
+  if (!dropThinking && !dropUsage) {
+    return new Response(errorText, { status: 400 });
+  }
+  if (dropThinking) {
+    thinkingParamSupported = false;
+  }
+  if (dropUsage) {
+    usageParamSupported = false;
+  }
+  const retryBody = { ...body };
+  if (dropThinking) {
+    delete retryBody.enable_thinking;
+    delete retryBody.thinking;
+  }
+  if (dropUsage) {
+    delete retryBody.stream_options;
+  }
+  return post(retryBody);
+}
+
+async function* streamRemoteReply(
+  messages: ChatMessage[],
+  model: AIModelConfig,
+  signal?: AbortSignal,
+  thinking = false,
+): AsyncGenerator<AIStreamChunk> {
+  const body = buildRequestBody(messages, model, thinking);
+  const response = await sendChatStream(model, body, signal);
   if (!response.ok || !response.body) {
     const errorText = await response.text().catch(() => "");
     throw new Error(
@@ -181,12 +346,12 @@ async function* streamRemoteReply(
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
       for (const line of lines) {
-        const chunk = parseSSEChunk(line);
-        if (chunk.done) {
+        const parsed = parseSSEChunk(line);
+        if (parsed.done) {
           return;
         }
-        if (chunk.content) {
-          yield chunk.content;
+        for (const chunk of parsed.chunks) {
+          yield chunk;
         }
       }
     }
@@ -199,10 +364,11 @@ export async function* askAI(
   messages: ChatMessage[],
   model: AIModelConfig,
   signal?: AbortSignal,
-): AsyncGenerator<string> {
+  thinking = false,
+): AsyncGenerator<AIStreamChunk> {
   if (!model.apiKey.trim() || !model.baseURL.trim() || !model.model.trim()) {
-    yield* streamMockReply(messages, model);
+    yield* streamMockReply(messages, model, thinking);
     return;
   }
-  yield* streamRemoteReply(messages, model, signal);
+  yield* streamRemoteReply(messages, model, signal, thinking);
 }

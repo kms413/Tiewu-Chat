@@ -1,11 +1,15 @@
 import React, { Suspense, useEffect } from "react";
 import ReactDom from "react-dom";
 import style from "../css/chat.module.less";
-import { askAI } from "../lib/ai";
-import type { ChatMessage } from "../types/chat";
+import { askAI, estimateTokens } from "../lib/ai";
+import type { AIUsage } from "../lib/ai";
+import type { ChatMessage, ChatMessageStats } from "../types/chat";
 import useAIModelsStore from "../stores/useAIModelsStore";
 import useChatStore from "../stores/useChatStore";
 import gsap from "gsap";
+import MarkdownView from "./markdown";
+
+const THINKING_STORAGE_KEY = "thinking-mode";
 
 const LuxunSayings = [
     "没有铁屋叙事，谁知道鲁迅🤣🤣🤣",
@@ -58,6 +62,58 @@ function WelcomeScreen() {
     );
 }
 
+function ThinkingBlock({
+    text,
+    isStreaming,
+}: {
+    text: string;
+    isStreaming: boolean;
+}) {
+    const [userOpen, setUserOpen] = React.useState<boolean | null>(null);
+    const isOpen = userOpen ?? isStreaming;
+    if (!text) {
+        return null;
+    }
+    return (
+        <div className={style["thinking-block"]}>
+            <button
+                type="button"
+                className={style["thinking-block-header"]}
+                onClick={() => setUserOpen(!isOpen)}
+            >
+                <span className={style["thinking-block-title"]}>
+                    {isStreaming ? "思考中…" : "深度思考"}
+                </span>
+                <span className={style["thinking-block-arrow"]}>
+                    {isOpen ? "▲" : "▼"}
+                </span>
+            </button>
+            {isOpen && (
+                <div className={style["thinking-block-body"]}>
+                    <MarkdownView content={text} />
+                </div>
+            )}
+        </div>
+    );
+}
+
+function formatMessageStats(stats: ChatMessageStats | undefined): string {
+    if (!stats) {
+        return "";
+    }
+    const parts: string[] = [];
+    if (stats.speed !== undefined) {
+        parts.push(`输出 ${stats.speed.toFixed(1)} tok/s`);
+    }
+    if (stats.tokens !== undefined) {
+        parts.push(`${stats.tokens} tokens`);
+    }
+    if (stats.cachedRate !== undefined) {
+        parts.push(`缓存命中 ${(stats.cachedRate * 100).toFixed(0)}%`);
+    }
+    return parts.join(" · ");
+}
+
 const MessageComponent = React.memo(function MessageComponent({
     message,
     isStreaming,
@@ -66,6 +122,7 @@ const MessageComponent = React.memo(function MessageComponent({
     isStreaming: boolean;
 }) {
     const isUser = message.role === "user";
+    const statsText = isUser ? "" : formatMessageStats(message.stats);
     const rowRef = React.useRef<HTMLDivElement>(null);
     React.useLayoutEffect(() => {
         if (!rowRef.current) return;
@@ -98,9 +155,18 @@ const MessageComponent = React.memo(function MessageComponent({
                         {message.modelName}
                     </div>
                 )} */}
-                {message.content}
-                {isStreaming && (
-                    <span className={style["message-streaming-cursor"]}></span>
+                {!isUser && message.reasoning && (
+                    <ThinkingBlock
+                        text={message.reasoning}
+                        isStreaming={isStreaming}
+                    />
+                )}
+                <MarkdownView
+                    content={message.content}
+                    streaming={isStreaming}
+                />
+                {statsText && (
+                    <div className={style["message-stats"]}>{statsText}</div>
                 )}
             </div>
         </div>
@@ -485,9 +551,19 @@ export function RightArea() {
     const streamingMessageId = useChatStore((state) => state.streamingMessageId);
     const isMessagesLoading = useChatStore((state) => state.isMessagesLoading);
     const [inputValue, setInputValue] = React.useState("");
+    const [thinkingEnabled, setThinkingEnabled] = React.useState(
+        () => localStorage.getItem(THINKING_STORAGE_KEY) === "1"
+    );
     const stopStreamingRef = React.useRef(false);
     const abortControllerRef = React.useRef<AbortController | null>(null);
     const sessionSnapshotsRef = React.useRef<Map<string, ChatMessage[]>>(new Map());
+
+    useEffect(() => {
+        localStorage.setItem(
+            THINKING_STORAGE_KEY,
+            thinkingEnabled ? "1" : "0"
+        );
+    }, [thinkingEnabled]);
 
     useEffect(() => {
         return () => {
@@ -532,16 +608,81 @@ export function RightArea() {
         stopStreamingRef.current = false;
         abortControllerRef.current = new AbortController();
         let lastPersistAt = Date.now();
+        const startedAt = Date.now();
+        let firstTokenAt: number | null = null;
+        let lastTokenAt = 0;
+        let outputTokens = 0;
+        let usage: AIUsage | null = null;
+        let lastStatsAt = 0;
+
+        const emitStats = (isFinal: boolean) => {
+            const now = Date.now();
+            if (outputTokens <= 0 && !usage) {
+                return;
+            }
+            if (!isFinal && now - lastStatsAt < 500) {
+                return;
+            }
+            lastStatsAt = now;
+            const base = firstTokenAt ?? startedAt;
+            const endAt = isFinal ? Math.max(lastTokenAt, base) : now;
+            const seconds = Math.max((endAt - base) / 1000, 0.1);
+            let speed =
+                outputTokens > 0 ? outputTokens / seconds : undefined;
+            if (
+                usage &&
+                firstTokenAt !== null &&
+                lastTokenAt > firstTokenAt
+            ) {
+                speed =
+                    usage.completionTokens /
+                    Math.max((lastTokenAt - firstTokenAt) / 1000, 0.1);
+            }
+            const stats: ChatMessageStats = {
+                speed,
+                tokens: usage
+                    ? usage.completionTokens
+                    : Math.round(outputTokens),
+                cachedRate:
+                    usage &&
+                    usage.promptTokens > 0 &&
+                    usage.cachedTokens !== undefined
+                        ? usage.cachedTokens / usage.promptTokens
+                        : undefined,
+            };
+            useChatStore.getState().setMessageStats(assistantMessage.id, stats);
+        };
+
         try {
             for await (const chunk of askAI(
                 history,
                 model,
-                abortControllerRef.current.signal
+                abortControllerRef.current.signal,
+                thinkingEnabled
             )) {
                 if (stopStreamingRef.current) {
                     break;
                 }
-                useChatStore.getState().appendChunk(assistantMessage.id, chunk);
+                if (chunk.kind === "usage") {
+                    usage = chunk.usage;
+                    continue;
+                }
+                const arrivedAt = Date.now();
+                if (firstTokenAt === null) {
+                    firstTokenAt = arrivedAt;
+                }
+                lastTokenAt = arrivedAt;
+                outputTokens += estimateTokens(chunk.text);
+                const chatStoreNow = useChatStore.getState();
+                if (chunk.kind === "reasoning") {
+                    chatStoreNow.appendReasoningChunk(
+                        assistantMessage.id,
+                        chunk.text
+                    );
+                } else {
+                    chatStoreNow.appendChunk(assistantMessage.id, chunk.text);
+                }
+                emitStats(false);
                 sessionSnapshotsRef.current.set(
                     sessionIdAtStart,
                     useChatStore.getState().messages
@@ -560,6 +701,7 @@ export function RightArea() {
                     .appendChunk(assistantMessage.id, `【请求失败】${errorText}`);
             }
         } finally {
+            emitStats(true);
             const currentStore = useChatStore.getState();
             if (currentStore.activeSessionId !== sessionIdAtStart) {
                 const snapshot = sessionSnapshotsRef.current.get(sessionIdAtStart);
@@ -593,7 +735,37 @@ export function RightArea() {
                 />
             )}
             <div className={style["input-area"]}>
-                <ModelSelector disabled={isStreaming} />
+                <div className={style["input-toolbar"]}>
+                    <ModelSelector disabled={isStreaming} />
+                    <button
+                        type="button"
+                        className={`${style["thinking-toggle"]} ${
+                            thinkingEnabled
+                                ? style["thinking-toggle-active"]
+                                : ""
+                        }`}
+                        disabled={isStreaming}
+                        aria-pressed={thinkingEnabled}
+                        title={
+                            thinkingEnabled
+                                ? "深度思考已开启，点击关闭"
+                                : "深度思考已关闭，点击开启"
+                        }
+                        onClick={() => setThinkingEnabled((value) => !value)}
+                    >
+                        <span className={style["thinking-toggle-label"]}>
+                            深度思考
+                        </span>
+                        <span
+                            className={style["thinking-toggle-switch"]}
+                            aria-hidden="true"
+                        >
+                            <span
+                                className={style["thinking-toggle-knob"]}
+                            ></span>
+                        </span>
+                    </button>
+                </div>
                 <InputBox
                     value={inputValue}
                     isStreaming={isStreaming}
